@@ -14,8 +14,12 @@ class AuthController extends Controller
     {
         $user = User::create($request->validated());
 
-        return (new UserResource($user))
-            ->response()
-            ->setStatusCode(201);
+        // Токен для запросов
+        $token = $user->createToken('auth')->plainTextToken;
+
+        return response()->json([
+            'user' => new UserResource($user),
+            'token' => $token,
+        ], 201);
     }
 }
