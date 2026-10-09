@@ -1,0 +1,26 @@
+# Домен задаётся переменной DOMAIN, Caddy сам получает для него HTTPS-сертификат
+{$DOMAIN:localhost} {
+	encode gzip
+
+	# Все запросы к API передаём в Laravel через index.php
+	handle /api/* {
+		rewrite * /index.php
+		reverse_proxy backend:9000 {
+			transport fastcgi {
+				root /var/www/html/public
+				split .php
+			}
+		}
+	}
+
+	# Остальное — Vue-приложение. Неизвестные пути отдаём в index.html, чтобы работал роутер (например, /profile)
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+}
+
+www.{$DOMAIN:localhost} {
+	redir https://{$DOMAIN:localhost}{uri} permanent
+}
